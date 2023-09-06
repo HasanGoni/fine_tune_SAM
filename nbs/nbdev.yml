@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "fine_tune_SAM"
+  site-url: "https://HasanGoni.github.io/fine_tune_SAM"
+  description: "finetune Sagement Anything Model with own data"
+  repo-branch: main
+  repo-url: "https://github.com/HasanGoni/fine_tune_SAM"
