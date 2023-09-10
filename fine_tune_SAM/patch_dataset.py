@@ -20,7 +20,11 @@ DPI=mpl.rcParams['figure.dpi']
 mpl.rcParams['image.cmap'] = 'gray'
 
 # %% ../nbs/01_patch_dataset.ipynb 10
-def show_rand_img(idx, im_path, msk_path):
+def show_rand_img(
+        idx,  # in case of None, a random image is chosen
+        im_path, 
+        msk_path):
+    "Show random mask and image from together from path"
     images = Path(im_path).ls()
     masks = Path(msk_path).ls()
 
@@ -33,7 +37,7 @@ def show_rand_img(idx, im_path, msk_path):
     ax[0].imshow(img,cmap='gray')
     ax[1].imshow(msk,cmap='gray');
 
-# %% ../nbs/01_patch_dataset.ipynb 21
+# %% ../nbs/01_patch_dataset.ipynb 22
 def patch_img_and_mask(
         im_path:Union[Path, str],
         msk_path:Union[Path, str],
