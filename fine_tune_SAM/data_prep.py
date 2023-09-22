@@ -3,7 +3,7 @@
 # %% auto 0
 __all__ = ['DPI', 'processor', 'get_dataset', 'show_dataset', 'get_bounding_box', 'SAMDataset']
 
-# %% ../nbs/02_data_preparation.ipynb 2
+# %% ../nbs/02_data_preparation.ipynb 4
 from pathlib import Path
 from typing import Union, List, Dict, Any, Optional, Callable, Type, Tuple
 from fastcore.all import * 
@@ -15,23 +15,23 @@ from PIL import Image
 import matplotlib as mpl
 
 
-# %% ../nbs/02_data_preparation.ipynb 3
+# %% ../nbs/02_data_preparation.ipynb 5
 DPI =mpl.rcParams['figure.dpi']
 mpl.rcParams['image.cmap'] = 'gray'
 
-# %% ../nbs/02_data_preparation.ipynb 4
+# %% ../nbs/02_data_preparation.ipynb 6
 import torch
 from torch.utils.data import DataLoader
 from datasets import Dataset
 from torch.optim import AdamW
 import monai
 
-# %% ../nbs/02_data_preparation.ipynb 5
+# %% ../nbs/02_data_preparation.ipynb 7
 from transformers import SamProcessor
 # we will start with base
 processor = SamProcessor.from_pretrained('facebook/sam-vit-base')
 
-# %% ../nbs/02_data_preparation.ipynb 7
+# %% ../nbs/02_data_preparation.ipynb 9
 def get_dataset(
         im_path:Union[Path,str],
         msk_path:Union[Path, str]
@@ -64,7 +64,7 @@ def get_dataset(
 
     
 
-# %% ../nbs/02_data_preparation.ipynb 10
+# %% ../nbs/02_data_preparation.ipynb 14
 def show_dataset(dataset):
     idx = np.random.randint(0, len(dataset))
     print(f' dataset index will be visualized: {idx}')
@@ -77,7 +77,7 @@ def show_dataset(dataset):
     ax[1].imshow(msk_)
 
 
-# %% ../nbs/02_data_preparation.ipynb 12
+# %% ../nbs/02_data_preparation.ipynb 21
 def get_bounding_box(
         ground_truth_map
         ):
@@ -98,11 +98,11 @@ def get_bounding_box(
 
     return bbox
 
-# %% ../nbs/02_data_preparation.ipynb 14
+# %% ../nbs/02_data_preparation.ipynb 23
 from torch.utils.data import Dataset
 
 
-# %% ../nbs/02_data_preparation.ipynb 15
+# %% ../nbs/02_data_preparation.ipynb 24
 class SAMDataset(Dataset):
     "Creating dataset for SAM training"
 

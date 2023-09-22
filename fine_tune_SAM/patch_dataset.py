@@ -3,7 +3,7 @@
 # %% auto 0
 __all__ = ['DPI', 'show_rand_img', 'patch_img_and_mask']
 
-# %% ../nbs/01_patch_dataset.ipynb 2
+# %% ../nbs/01_patch_dataset.ipynb 4
 from fastcore.all import *
 import cv2
 import tifffile
@@ -14,16 +14,18 @@ from tqdm import tqdm
 from patchify import patchify
 from scipy import ndimage
 import matplotlib as mpl
+from typing import List, Tuple, Union, Optional
 
-# %% ../nbs/01_patch_dataset.ipynb 3
+# %% ../nbs/01_patch_dataset.ipynb 5
 DPI=mpl.rcParams['figure.dpi']
 mpl.rcParams['image.cmap'] = 'gray'
 
-# %% ../nbs/01_patch_dataset.ipynb 10
+# %% ../nbs/01_patch_dataset.ipynb 13
 def show_rand_img(
-        idx,  # in case of None, a random image is chosen
-        im_path, 
-        msk_path):
+        idx:int,  # in case of None, a random image is chosen
+        im_path:str, 
+        msk_path:str
+        ):
     "Show random mask and image from together from path"
     images = Path(im_path).ls()
     masks = Path(msk_path).ls()
@@ -37,7 +39,7 @@ def show_rand_img(
     ax[0].imshow(img,cmap='gray')
     ax[1].imshow(msk,cmap='gray');
 
-# %% ../nbs/01_patch_dataset.ipynb 22
+# %% ../nbs/01_patch_dataset.ipynb 25
 def patch_img_and_mask(
         im_path:Union[Path, str],
         msk_path:Union[Path, str],
