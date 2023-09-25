@@ -20,7 +20,7 @@ from typing import List, Tuple, Union, Optional
 DPI=mpl.rcParams['figure.dpi']
 mpl.rcParams['image.cmap'] = 'gray'
 
-# %% ../nbs/01_patch_dataset.ipynb 13
+# %% ../nbs/01_patch_dataset.ipynb 16
 def show_rand_img(
         idx:int,  # in case of None, a random image is chosen
         im_path:str, 
@@ -39,7 +39,7 @@ def show_rand_img(
     ax[0].imshow(img,cmap='gray')
     ax[1].imshow(msk,cmap='gray');
 
-# %% ../nbs/01_patch_dataset.ipynb 25
+# %% ../nbs/01_patch_dataset.ipynb 32
 def patch_img_and_mask(
         im_path:Union[Path, str],
         msk_path:Union[Path, str],
