@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://HasanGoni.github.io/fine_tune_SAM/patch_dataset.html</loc>
+    <lastmod>2023-10-01T20:45:39.062Z</lastmod>
+  </url>
+  <url>
+    <loc>https://HasanGoni.github.io/fine_tune_SAM/core.html</loc>
+    <lastmod>2023-10-01T20:45:38.186Z</lastmod>
+  </url>
+  <url>
+    <loc>https://HasanGoni.github.io/fine_tune_SAM/data_preparation.html</loc>
+    <lastmod>2023-10-01T20:45:37.218Z</lastmod>
+  </url>
+  <url>
+    <loc>https://HasanGoni.github.io/fine_tune_SAM/upload_data_hf.html</loc>
+    <lastmod>2023-10-01T20:45:36.362Z</lastmod>
+  </url>
+  <url>
+    <loc>https://HasanGoni.github.io/fine_tune_SAM/index.html</loc>
+    <lastmod>2023-10-01T20:45:37.826Z</lastmod>
+  </url>
+  <url>
+    <loc>https://HasanGoni.github.io/fine_tune_SAM/data_prep_from_hf.html</loc>
+    <lastmod>2023-10-01T20:45:38.610Z</lastmod>
+  </url>
+</urlset>
