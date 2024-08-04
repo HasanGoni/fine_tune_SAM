@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.56">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Dataset preparation from HF – fine_tune_SAM</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Dataset preparation from HF – fine_tune_SAM">
+<meta property="og:description" content="finetune Sagement Anything Model with own data">
+<meta property="og:site_name" content="fine_tune_SAM">
+<meta name="twitter:title" content="Dataset preparation from HF – fine_tune_SAM">
+<meta name="twitter:description" content="finetune Sagement Anything Model with own data">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">fine_tune_SAM</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./data_prep_from_hf.html">Dataset preparation from HF</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">fine_tune_SAM</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./patch_dataset.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dataset Patchify</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data_preparation.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Dataset Preparation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./upload_data_hf.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Hugging Face data download is here</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./data_prep_from_hf.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Dataset preparation from HF</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./inference_with_medsam.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">MedSAM inference</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#get_bounding_box" id="toc-get_bounding_box" class="nav-link active" data-scroll-target="#get_bounding_box">get_bounding_box</a></li>
+  <li><a href="#samdataset" id="toc-samdataset" class="nav-link" data-scroll-target="#samdataset">SAMDataset</a></li>
+  <li><a href="#creating-pytorch-dataset" id="toc-creating-pytorch-dataset" class="nav-link" data-scroll-target="#creating-pytorch-dataset">Creating pytorch dataset</a></li>
+  <li><a href="#creating-pytorch-pytorch-dataloader" id="toc-creating-pytorch-pytorch-dataloader" class="nav-link" data-scroll-target="#creating-pytorch-pytorch-dataloader">Creating pytorch pytorch dataloader</a></li>
+  <li><a href="#loading-model" id="toc-loading-model" class="nav-link" data-scroll-target="#loading-model">loading Model</a>
+  <ul class="collapse">
+  <li><a href="#validate" id="toc-validate" class="nav-link" data-scroll-target="#validate">validate</a></li>
+  <li><a href="#pt_train" id="toc-pt_train" class="nav-link" data-scroll-target="#pt_train">pt_train</a></li>
+  <li><a href="#validate-1" id="toc-validate-1" class="nav-link" data-scroll-target="#validate-1">validate</a></li>
+  <li><a href="#train_and_validate" id="toc-train_and_validate" class="nav-link" data-scroll-target="#train_and_validate">train_and_validate</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/HasanGoni/fine_tune_SAM/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Dataset preparation from HF</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<blockquote class="blockquote">
+<p>Data will be downloaded from hugging face and then will be processed to get the data in the format we want.</p>
+</blockquote>
+<div id="cell-3" class="cell" data-execution_count="141">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#from cv_tools.core import *</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-4" class="cell" data-execution_count="6">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dataset <span class="op">=</span> load_dataset(<span class="st">"nielsr/breast-cancer"</span>, split<span class="op">=</span><span class="st">"train"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="6">
+<pre><code>Dataset({
+    features: ['image', 'label'],
+    num_rows: 130
+})</code></pre>
+</div>
+</div>
+<div id="cell-5" class="cell" data-execution_count="7">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>img <span class="op">=</span> dataset[<span class="dv">0</span>][<span class="st">'image'</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>msk <span class="op">=</span> dataset[<span class="dv">0</span>][<span class="st">'label'</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>img.size, img.mode, msk.size, msk.mode</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="7">
+<pre><code>((256, 256), 'RGB', (256, 256), 'I')</code></pre>
+</div>
+</div>
+<div id="cell-6" class="cell" data-execution_count="142">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> datasets <span class="im">import</span> load_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-7" class="cell" data-execution_count="143">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>training_dataset <span class="op">=</span> load_dataset(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="st">"hasangoni/Electron_microscopy_dataset"</span>,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    split<span class="op">=</span><span class="st">"train"</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>validation_dataset <span class="op">=</span> load_dataset(</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"hasangoni/Electron_microscopy_dataset"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    split<span class="op">=</span><span class="st">"test"</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-8" class="cell" data-execution_count="144">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>training_dataset</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display" data-execution_count="144">
+<pre><code>Dataset({
+    features: ['image', 'label'],
+    num_rows: 1642
+})</code></pre>
+</div>
+</div>
+<hr>
+<p><a href="https://github.com/HasanGoni/fine_tune_SAM/blob/main/fine_tune_SAM/med_sam_inference.py#L17" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="get_bounding_box" class="level3">
+<h3 class="anchored" data-anchor-id="get_bounding_box">get_bounding_box</h3>
+<blockquote class="blockquote">
+<pre><code> get_bounding_box (ground_truth_map:numpy.ndarray)</code></pre>
+</blockquote>
+<p><em>Get bounding box coordinates from mask image</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>ground_truth_map</td>
+<td>ndarray</td>
+<td>mask image type cv2</td>
+</tr>
+</tbody>
+</table>
+<p>tesing get_bounding_box</p>
+<hr>
+<p><a href="https://github.com/HasanGoni/fine_tune_SAM/blob/main/fine_tune_SAM/data_prep.py#L106" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="samdataset" class="level3">
+<h3 class="anchored" data-anchor-id="samdataset">SAMDataset</h3>
+<blockquote class="blockquote">
+<pre><code> SAMDataset (dataset:torch.utils.data.dataset.Dataset,
+             processor:transformers.models.sam.processing_sam.SamProcessor
+             )</code></pre>
+</blockquote>
+<p><em>Creating dataset for SAM Training</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>dataset</td>
+<td>Dataset</td>
+<td>pytorch dataset</td>
+</tr>
+<tr class="even">
+<td>processor</td>
+<td>SamProcessor</td>
+<td>hf model processor</td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="creating-pytorch-dataset" class="level1">
+<h1>Creating pytorch dataset</h1>
+<div id="cell-13" class="cell" data-execution_count="147">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>processor <span class="op">=</span> SamProcessor.from_pretrained(<span class="st">'facebook/sam-vit-base'</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>train_dataset <span class="op">=</span> SAMDataset(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  dataset<span class="op">=</span>training_dataset, </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  processor<span class="op">=</span>processor)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>val_dataset <span class="op">=</span> SAMDataset(</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  dataset<span class="op">=</span>validation_dataset, </span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  processor<span class="op">=</span>processor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-14" class="cell" data-execution_count="129">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>trn_ <span class="op">=</span> np.transpose(train_dataset[<span class="dv">0</span>][<span class="st">'pixel_values'</span>].to(<span class="st">'cpu'</span>).numpy(), (<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>val_ <span class="op">=</span> np.transpose(val_dataset[<span class="dv">0</span>][<span class="st">'pixel_values'</span>].to(<span class="st">'cpu'</span>).numpy(), (<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#show_(trn_)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-15" class="cell" data-execution_count="148">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>train_dataloader <span class="op">=</span> DataLoader(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                            train_dataset, </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                            batch_size<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                            shuffle<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>val_dataloader <span class="op">=</span> DataLoader(</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>                            val_dataset, </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>                            batch_size<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>                            shuffle<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-17" class="cell" data-execution_count="131">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>example <span class="op">=</span> train_dataset[<span class="dv">0</span>]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k,v <span class="kw">in</span> example.items():</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">print</span>(k,v.shape)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SamModel.from_pretrained(<span class="st">"facebook/sam-vit-base"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure we only compute gradients for mask decoder</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, param <span class="kw">in</span> model.named_parameters():</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> name.startswith(<span class="st">"vision_encoder"</span>) <span class="kw">or</span> name.startswith(<span class="st">"prompt_encoder"</span>):</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    param.requires_grad_(<span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>pixel_values torch.Size([3, 1024, 1024])
+original_sizes torch.Size([2])
+reshaped_input_sizes torch.Size([2])
+input_boxes torch.Size([1, 4])
+ground_truth_mask (256, 256)</code></pre>
+</div>
+</div>
+</section>
+<section id="creating-pytorch-pytorch-dataloader" class="level1">
+<h1>Creating pytorch pytorch dataloader</h1>
+<div id="cell-19" class="cell" data-execution_count="149">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>train_dataloader <span class="op">=</span> DataLoader(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    train_ds, </span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    batch_size<span class="op">=</span><span class="dv">2</span>, </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    shuffle<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>val_dataloader <span class="op">=</span> DataLoader(</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    val_ds, </span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    batch_size<span class="op">=</span><span class="dv">2</span>, </span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>    shuffle<span class="op">=</span><span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-error">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">NameError</span>                                 Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[149], line 2</span>
+<span class="ansi-green-fg ansi-bold">      1</span> train_dataloader <span style="color:rgb(98,98,98)">=</span> DataLoader(
+<span class="ansi-green-fg">----&gt; 2</span>     <span class="ansi-yellow-bg">train_ds</span>, 
+<span class="ansi-green-fg ansi-bold">      3</span>     batch_size<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(98,98,98)">2</span>, 
+<span class="ansi-green-fg ansi-bold">      4</span>     shuffle<span style="color:rgb(98,98,98)">=</span><span style="font-weight:bold;color:rgb(0,135,0)">True</span>)
+<span class="ansi-green-fg ansi-bold">      5</span> val_dataloader <span style="color:rgb(98,98,98)">=</span> DataLoader(
+<span class="ansi-green-fg ansi-bold">      6</span>     val_ds, 
+<span class="ansi-green-fg ansi-bold">      7</span>     batch_size<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(98,98,98)">2</span>, 
+<span class="ansi-green-fg ansi-bold">      8</span>     shuffle<span style="color:rgb(98,98,98)">=</span><span style="font-weight:bold;color:rgb(0,135,0)">False</span>)
+
+<span class="ansi-red-fg">NameError</span>: name 'train_ds' is not defined</pre>
+</div>
+</div>
+</div>
+<p>testing pytorch dataloader</p>
+<div id="cell-21" class="cell" data-execution_count="37">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>batch <span class="op">=</span> <span class="bu">next</span>(<span class="bu">iter</span>(train_dataloader))</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> k,v <span class="kw">in</span> batch.items():</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">print</span>(k,v.shape)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>pixel_values torch.Size([2, 3, 1024, 1024])
+original_sizes torch.Size([2, 2])
+reshaped_input_sizes torch.Size([2, 2])
+input_boxes torch.Size([2, 1, 4])
+ground_truth_mask torch.Size([2, 256, 256])</code></pre>
+</div>
+</div>
+</section>
+<section id="loading-model" class="level1">
+<h1>loading Model</h1>
+<div id="cell-23" class="cell" data-execution_count="150">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>model <span class="op">=</span> SamModel.from_pretrained(<span class="st">'facebook/sam-vit-base'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-24" class="cell" data-execution_count="151">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure we only compute gradients for mask decoder</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, param <span class="kw">in</span> model.named_parameters():</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> name.startswith(<span class="st">"vision_encoder"</span>) <span class="kw">or</span> name.startswith(<span class="st">"prompt_encoder"</span>):</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    param.requires_grad_(<span class="va">False</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-25" class="cell" data-execution_count="152">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>NUM_EPOCHS <span class="op">=</span> <span class="dv">2</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>T_0 <span class="op">=</span> <span class="bu">int</span>(<span class="fl">0.5</span> <span class="op">*</span> NUM_EPOCHS)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>ITERS <span class="op">=</span> <span class="bu">len</span>(train_dataloader)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-26" class="cell" data-execution_count="153">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> AdamW(</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>    model.mask_decoder.parameters(),</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>    lr<span class="op">=</span><span class="fl">0.001</span>,</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    weight_decay<span class="op">=</span><span class="fl">0.0001</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-27" class="cell" data-execution_count="154">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> <span class="st">"cuda"</span> <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>device<span class="op">=</span> <span class="st">"cpu"</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co"># in case of very small gpu memory, like me then use cpu</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co">#device = "cpu"</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>model.to(device)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>scheduler <span class="op">=</span> CosineAnnealingWarmRestarts(</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>   T_0<span class="op">=</span>T_0,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>   optimizer<span class="op">=</span>optimizer, </span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>   eta_min<span class="op">=</span><span class="fl">0.00001</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-28" class="cell" data-execution_count="155">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>device<span class="op">=</span><span class="st">'cpu'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<hr>
+<section id="validate" class="level3">
+<h3 class="anchored" data-anchor-id="validate">validate</h3>
+<blockquote class="blockquote">
+<pre><code> validate (model:transformers.models.sam.modeling_sam.SamModel,
+           dataloader:torch.utils.data.dataloader.DataLoader, loss_fn:&lt;mod
+           ule'monai.losses.dice'from'/opt/hostedtoolcache/Python/3.10.14/
+           x64/lib/python3.10/site-packages/monai/losses/dice.py'&gt;,
+           device:str='cpu')</code></pre>
+</blockquote>
+<div id="cell-31" class="cell" data-execution_count="44">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>num_epochs <span class="op">=</span> <span class="dv">100</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> <span class="st">"cuda"</span> <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> <span class="st">"cpu"</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>model.to(device)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>seg_loss <span class="op">=</span> monai.losses.DiceCELoss(</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    sigmoid<span class="op">=</span><span class="va">True</span>, </span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    squared_pred<span class="op">=</span><span class="va">True</span>, </span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    reduction<span class="op">=</span><span class="st">'mean'</span>)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>model.train()</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> epoch <span class="kw">in</span> <span class="bu">range</span>(num_epochs):</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    epoch_losses <span class="op">=</span> []</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> batch <span class="kw">in</span> tqdm(train_dataloader):</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>      <span class="co"># forward pass</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>      <span class="bu">print</span>(batch[<span class="st">'pixel_values'</span>].shape)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>      outputs <span class="op">=</span> model(pixel_values<span class="op">=</span>batch[<span class="st">"pixel_values"</span>].to(device),</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>                      input_boxes<span class="op">=</span>batch[<span class="st">"input_boxes"</span>].to(device),</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>                      multimask_output<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>      <span class="bu">print</span>(<span class="ss">f'outputs shape </span><span class="sc">{</span>outputs<span class="sc">.</span>pred_masks<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>      <span class="co"># compute loss</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>      predicted_masks <span class="op">=</span> outputs.pred_masks.squeeze(<span class="dv">1</span>)</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>      <span class="bu">print</span>(<span class="ss">f'predicted_masks shape </span><span class="sc">{</span>predicted_masks<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">'</span>) </span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>      ground_truth_masks <span class="op">=</span> batch[<span class="st">"ground_truth_mask"</span>].<span class="bu">float</span>().to(device)</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>      <span class="bu">print</span>(<span class="ss">f'ground_truth_masks shape </span><span class="sc">{</span>ground_truth_masks<span class="sc">.</span>shape<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>      loss <span class="op">=</span> seg_loss(predicted_masks, ground_truth_masks.unsqueeze(<span class="dv">1</span>))</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>      <span class="co"># backward pass (compute gradients of parameters w.r.t. loss)</span></span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>      optimizer.zero_grad()</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>      loss.backward()</span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>      <span class="co"># optimize</span></span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>      optimizer.step()</span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>      epoch_losses.append(loss.item())</span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'EPOCH: </span><span class="sc">{</span>epoch<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Mean Training Loss: </span><span class="sc">{</span>mean(epoch_losses)<span class="sc">}</span><span class="ss">'</span>)</span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>    validation_loss <span class="op">=</span> validate(</span>
+<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a>        model<span class="op">=</span>model, </span>
+<span id="cb27-40"><a href="#cb27-40" aria-hidden="true" tabindex="-1"></a>        dataloader<span class="op">=</span>val_dataloader, </span>
+<span id="cb27-41"><a href="#cb27-41" aria-hidden="true" tabindex="-1"></a>        loss_fn<span class="op">=</span>seg_loss, </span>
+<span id="cb27-42"><a href="#cb27-42" aria-hidden="true" tabindex="-1"></a>        device<span class="op">=</span>device)</span>
+<span id="cb27-43"><a href="#cb27-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-44"><a href="#cb27-44" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f'Validation Loss: </span><span class="sc">{</span>validation_loss<span class="sc">}</span><span class="ss">'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>  0%|          | 0/65 [00:00&lt;?, ?it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>torch.Size([2, 3, 1024, 1024])</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>  0%|          | 0/65 [00:03&lt;?, ?it/s]</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[44], line 16</span>
+<span class="ansi-green-fg ansi-bold">     13</span> <span style="font-weight:bold;color:rgb(0,135,0)">for</span> batch <span style="font-weight:bold;color:rgb(175,0,255)">in</span> tqdm(train_dataloader):
+<span class="ansi-green-fg ansi-bold">     14</span>   <span style="font-style:italic;color:rgb(95,135,135)"># forward pass</span>
+<span class="ansi-green-fg ansi-bold">     15</span>   <span style="color:rgb(0,135,0)">print</span>(batch[<span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)">pixel_values</span><span style="color:rgb(175,0,0)">'</span>]<span style="color:rgb(98,98,98)">.</span>shape)
+<span class="ansi-green-fg">---&gt; 16</span>   outputs <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">pixel_values</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">batch</span><span class="ansi-yellow-bg">[</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">pixel_values</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span class="ansi-yellow-bg">]</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">to</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">     17</span> <span class="ansi-yellow-bg">                  </span><span class="ansi-yellow-bg">input_boxes</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">batch</span><span class="ansi-yellow-bg">[</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">input_boxes</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span class="ansi-yellow-bg">]</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">to</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">     18</span> <span class="ansi-yellow-bg">                  </span><span class="ansi-yellow-bg">multimask_output</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span style="font-weight:bold;color:rgb(0,135,0)" class="ansi-yellow-bg">False</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">     19</span>   <span style="color:rgb(0,135,0)">print</span>(<span style="color:rgb(175,0,0)">f</span><span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)">outputs shape </span><span style="font-weight:bold;color:rgb(175,95,135)">{</span>outputs<span style="color:rgb(98,98,98)">.</span>pred_masks<span style="color:rgb(98,98,98)">.</span>shape<span style="font-weight:bold;color:rgb(175,95,135)">}</span><span style="color:rgb(175,0,0)">'</span>)
+<span class="ansi-green-fg ansi-bold">     21</span>   <span style="font-style:italic;color:rgb(95,135,135)"># compute loss</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:1358</span>, in <span class="ansi-cyan-fg">SamModel.forward</span><span class="ansi-blue-fg">(self, pixel_values, input_points, input_labels, input_boxes, input_masks, image_embeddings, multimask_output, attention_similarity, target_embedding, output_attentions, output_hidden_states, return_dict, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1355</span> vision_hidden_states <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+<span class="ansi-green-fg ansi-bold">   1357</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> pixel_values <span style="font-weight:bold;color:rgb(175,0,255)">is</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>:
+<span class="ansi-green-fg">-&gt; 1358</span>     vision_outputs <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">vision_encoder</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg ansi-bold">   1359</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">pixel_values</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1360</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">output_attentions</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_attentions</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1361</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">output_hidden_states</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_hidden_states</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1362</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">return_dict</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">return_dict</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1363</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1364</span>     image_embeddings <span style="color:rgb(98,98,98)">=</span> vision_outputs[<span style="color:rgb(98,98,98)">0</span>]
+<span class="ansi-green-fg ansi-bold">   1366</span>     <span style="font-weight:bold;color:rgb(0,135,0)">if</span> output_hidden_states:
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:1046</span>, in <span class="ansi-cyan-fg">SamVisionEncoder.forward</span><span class="ansi-blue-fg">(self, pixel_values, output_attentions, output_hidden_states, return_dict)</span>
+<span class="ansi-green-fg ansi-bold">   1041</span>     layer_outputs <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_gradient_checkpointing_func(
+<span class="ansi-green-fg ansi-bold">   1042</span>         layer_module<span style="color:rgb(98,98,98)">.</span><span style="color:rgb(0,0,255)">__call__</span>,
+<span class="ansi-green-fg ansi-bold">   1043</span>         hidden_states,
+<span class="ansi-green-fg ansi-bold">   1044</span>     )
+<span class="ansi-green-fg ansi-bold">   1045</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1046</span>     layer_outputs <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">layer_module</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">hidden_states</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">output_attentions</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_attentions</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1048</span> hidden_states <span style="color:rgb(98,98,98)">=</span> layer_outputs[<span style="color:rgb(98,98,98)">0</span>]
+<span class="ansi-green-fg ansi-bold">   1050</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> output_attentions:
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:939</span>, in <span class="ansi-cyan-fg">SamVisionLayer.forward</span><span class="ansi-blue-fg">(self, hidden_states, output_attentions)</span>
+<span class="ansi-green-fg ansi-bold">    936</span>     height, width <span style="color:rgb(98,98,98)">=</span> hidden_states<span style="color:rgb(98,98,98)">.</span>shape[<span style="color:rgb(98,98,98)">1</span>], hidden_states<span style="color:rgb(98,98,98)">.</span>shape[<span style="color:rgb(98,98,98)">2</span>]
+<span class="ansi-green-fg ansi-bold">    937</span>     hidden_states, padding_shape <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>window_partition(hidden_states, <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>window_size)
+<span class="ansi-green-fg">--&gt; 939</span> hidden_states, attn_weights <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">attn</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg ansi-bold">    940</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">hidden_states</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">hidden_states</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">    941</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">output_attentions</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_attentions</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">    942</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">    943</span> <span style="font-style:italic;color:rgb(95,135,135)"># Reverse window partition</span>
+<span class="ansi-green-fg ansi-bold">    944</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>window_size <span style="color:rgb(98,98,98)">&gt;</span> <span style="color:rgb(98,98,98)">0</span>:
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:842</span>, in <span class="ansi-cyan-fg">SamVisionAttention.forward</span><span class="ansi-blue-fg">(self, hidden_states, output_attentions)</span>
+<span class="ansi-green-fg ansi-bold">    839</span> attn_weights <span style="color:rgb(98,98,98)">=</span> (query <span style="color:rgb(98,98,98)">*</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>scale) <span style="color:rgb(98,98,98)">@</span> key<span style="color:rgb(98,98,98)">.</span>transpose(<span style="color:rgb(98,98,98)">-</span><span style="color:rgb(98,98,98)">2</span>, <span style="color:rgb(98,98,98)">-</span><span style="color:rgb(98,98,98)">1</span>)
+<span class="ansi-green-fg ansi-bold">    841</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>use_rel_pos:
+<span class="ansi-green-fg">--&gt; 842</span>     attn_weights <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">add_decomposed_rel_pos</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg ansi-bold">    843</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">attn_weights</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">query</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">rel_pos_h</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">rel_pos_w</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">height</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">width</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">height</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">width</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">    844</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">    846</span> attn_weights <span style="color:rgb(98,98,98)">=</span> torch<span style="color:rgb(98,98,98)">.</span>nn<span style="color:rgb(98,98,98)">.</span>functional<span style="color:rgb(98,98,98)">.</span>softmax(attn_weights, dtype<span style="color:rgb(98,98,98)">=</span>torch<span style="color:rgb(98,98,98)">.</span>float32, dim<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(98,98,98)">-</span><span style="color:rgb(98,98,98)">1</span>)<span style="color:rgb(98,98,98)">.</span>to(query<span style="color:rgb(98,98,98)">.</span>dtype)
+<span class="ansi-green-fg ansi-bold">    848</span> attn_probs <span style="color:rgb(98,98,98)">=</span> nn<span style="color:rgb(98,98,98)">.</span>functional<span style="color:rgb(98,98,98)">.</span>dropout(attn_weights, p<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dropout, training<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>training)
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:825</span>, in <span class="ansi-cyan-fg">SamVisionAttention.add_decomposed_rel_pos</span><span class="ansi-blue-fg">(self, attn, query, rel_pos_h, rel_pos_w, q_size, k_size)</span>
+<span class="ansi-green-fg ansi-bold">    823</span> attn <span style="color:rgb(98,98,98)">=</span> attn<span style="color:rgb(98,98,98)">.</span>reshape(batch_size, query_height, query_width, key_height, key_width)
+<span class="ansi-green-fg ansi-bold">    824</span> attn <span style="color:rgb(98,98,98)">=</span> attn <span style="color:rgb(98,98,98)">+</span> rel_h[:, :, :, :, <span style="font-weight:bold;color:rgb(0,135,0)">None</span>] <span style="color:rgb(98,98,98)">+</span> rel_w[:, :, :, <span style="font-weight:bold;color:rgb(0,135,0)">None</span>, :]
+<span class="ansi-green-fg">--&gt; 825</span> attn <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">attn</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">reshape</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">batch_size</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">query_height</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">query_width</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">key_height</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">key_width</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">    826</span> <span style="font-weight:bold;color:rgb(0,135,0)">return</span> attn
+
+<span class="ansi-red-fg">KeyboardInterrupt</span>: </pre>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="pt_train" class="level3">
+<h3 class="anchored" data-anchor-id="pt_train">pt_train</h3>
+<blockquote class="blockquote">
+<pre><code> pt_train (train_dataloader:torch.utils.data.dataloader.DataLoader,
+           model:transformers.models.sam.modeling_sam.SamModel,
+           optimizer:torch.optim.optimizer.Optimizer,
+           device:Optional[str]='cpu', epoch_n:int=2)</code></pre>
+</blockquote>
+<div id="cell-34" class="cell" data-execution_count="46">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>pt_train(</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    train_dataloader<span class="op">=</span>train_dataloader,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span>model, </span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span>optimizer, </span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    device<span class="op">=</span>device, </span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    epoch_n<span class="op">=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Epoch 1</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>23it [08:41, 22.89s/it]</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-red-fg ansi-bold">The Kernel crashed while executing code in the current cell or a previous cell. 
+
+</span><span class="ansi-red-fg ansi-bold">Please review the code in the cell(s) to identify a possible cause of the failure. 
+
+</span><span class="ansi-red-fg ansi-bold">Click &lt;a href='https://aka.ms/vscodeJupyterKernelCrash'&gt;here&lt;/a&gt; for more info. 
+
+</span><span class="ansi-red-fg ansi-bold">View Jupyter &lt;a href='command:jupyter.viewOutput'&gt;log&lt;/a&gt; for further details.</span></pre>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="validate-1" class="level3">
+<h3 class="anchored" data-anchor-id="validate-1">validate</h3>
+<blockquote class="blockquote">
+<pre><code> validate (model:transformers.models.sam.modeling_sam.SamModel,
+           dataloader:torch.utils.data.dataloader.DataLoader, loss_fn:&lt;mod
+           ule'monai.losses'from'/opt/hostedtoolcache/Python/3.10.14/x64/l
+           ib/python3.10/site-packages/monai/losses/__init__.py'&gt;,
+           device:str='cpu')</code></pre>
+</blockquote>
+<p>*Validate the model using a validation dataloader.</p>
+<p>Parameters: - model: The PyTorch model to validate. - dataloader: DataLoader for validation data. - loss_fn: Loss function used for validation. - device: Device to run validation on (‘cuda’ or ‘cpu’).*</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>model</td>
+<td>SamModel</td>
+<td></td>
+<td>SAM model</td>
+</tr>
+<tr class="even">
+<td>dataloader</td>
+<td>DataLoader</td>
+<td></td>
+<td>Torch dataloader</td>
+</tr>
+<tr class="odd">
+<td>loss_fn</td>
+<td>monai.losses</td>
+<td></td>
+<td>Monai loss function</td>
+</tr>
+<tr class="even">
+<td>device</td>
+<td>str</td>
+<td>cpu</td>
+<td>whether to use cpu or gpu</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="train_and_validate" class="level3">
+<h3 class="anchored" data-anchor-id="train_and_validate">train_and_validate</h3>
+<blockquote class="blockquote">
+<pre><code> train_and_validate (model:transformers.models.sam.modeling_sam.SamModel,
+                     num_epochs:int,
+                     optimizer:torch.optim.optimizer.Optimizer, scheduler:
+                     &lt;module'torch.optim.lr_scheduler'from'/opt/hostedtool
+                     cache/Python/3.10.14/x64/lib/python3.10/site-
+                     packages/torch/optim/lr_scheduler.py'&gt;, train_dataloa
+                     der:torch.utils.data.dataloader.DataLoader, val_datal
+                     oader:torch.utils.data.dataloader.DataLoader, loss_fn
+                     :&lt;module'monai.losses'from'/opt/hostedtoolcache/Pytho
+                     n/3.10.14/x64/lib/python3.10/site-
+                     packages/monai/losses/__init__.py'&gt;,
+                     device:str='cpu')</code></pre>
+</blockquote>
+<p><em>Train and validate a model with the given parameters.</em></p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>model</td>
+<td>SamModel</td>
+<td></td>
+<td>SAM model</td>
+</tr>
+<tr class="even">
+<td>num_epochs</td>
+<td>int</td>
+<td></td>
+<td>Number of epochs to train for</td>
+</tr>
+<tr class="odd">
+<td>optimizer</td>
+<td>Optimizer</td>
+<td></td>
+<td>Optimizer to use</td>
+</tr>
+<tr class="even">
+<td>scheduler</td>
+<td>torch.optim.lr_scheduler</td>
+<td></td>
+<td>Learning rate scheduler</td>
+</tr>
+<tr class="odd">
+<td>train_dataloader</td>
+<td>DataLoader</td>
+<td></td>
+<td>DataLoader for training data</td>
+</tr>
+<tr class="even">
+<td>val_dataloader</td>
+<td>DataLoader</td>
+<td></td>
+<td>DataLoader for validation data</td>
+</tr>
+<tr class="odd">
+<td>loss_fn</td>
+<td>monai.losses</td>
+<td></td>
+<td>Loss function used for training</td>
+</tr>
+<tr class="even">
+<td>device</td>
+<td>str</td>
+<td>cpu</td>
+<td>Device to train on (‘cuda’ or ‘cpu’)</td>
+</tr>
+</tbody>
+</table>
+<div id="cell-41" class="cell" data-execution_count="160">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co">#model = SamModel.from_pretrained('facebook/sam-vit-base')</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>optimizer <span class="op">=</span> AdamW(</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    model.mask_decoder.parameters(),</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    lr<span class="op">=</span><span class="fl">0.001</span>,</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    weight_decay<span class="op">=</span><span class="fl">0.0001</span>)</span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>scheduler <span class="op">=</span> CosineAnnealingWarmRestarts(</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>   T_0<span class="op">=</span><span class="dv">10</span>,</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>   T_mult<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a>   optimizer<span class="op">=</span>optimizer, </span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>   eta_min<span class="op">=</span><span class="fl">0.00001</span>)</span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>seg_loss <span class="op">=</span> monai.losses.DiceCELoss()</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>device<span class="op">=</span><span class="st">'cpu'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-42" class="cell" data-execution_count="161">
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>train_and_validate(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    model<span class="op">=</span>model,</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    num_epochs<span class="op">=</span><span class="dv">2</span>,</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    optimizer<span class="op">=</span>optimizer,</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    scheduler<span class="op">=</span>scheduler,</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    train_dataloader<span class="op">=</span>train_dataloader,</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    val_dataloader<span class="op">=</span>val_dataloader,</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    loss_fn<span class="op">=</span>seg_loss,</span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>    device<span class="op">=</span>device</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Epoch 1/2:   0%|          | 1/821 [00:36&lt;8:21:37, 36.70s/it]</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<div class="ansi-escaped-output">
+<pre><span class="ansi-red-fg">---------------------------------------------------------------------------</span>
+<span class="ansi-red-fg">KeyboardInterrupt</span>                         Traceback (most recent call last)
+Cell <span class="ansi-green-fg">In[161], line 1</span>
+<span class="ansi-green-fg">----&gt; 1</span> <span class="ansi-yellow-bg">train_and_validate</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg ansi-bold">      2</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">model</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      3</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">num_epochs</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">2</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      4</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">optimizer</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">optimizer</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      5</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">scheduler</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">scheduler</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      6</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">train_dataloader</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">train_dataloader</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      7</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">val_dataloader</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">val_dataloader</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      8</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">loss_fn</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">seg_loss</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">      9</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">device</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">device</span>
+<span class="ansi-green-fg ansi-bold">     10</span> <span class="ansi-yellow-bg">)</span>
+
+Cell <span class="ansi-green-fg">In[159], line 26</span>, in <span class="ansi-cyan-fg">train_and_validate</span><span class="ansi-blue-fg">(model, num_epochs, optimizer, scheduler, train_dataloader, val_dataloader, loss_fn, device)</span>
+<span class="ansi-green-fg ansi-bold">     20</span> progress_bar <span style="color:rgb(98,98,98)">=</span> tqdm(
+<span class="ansi-green-fg ansi-bold">     21</span>     train_dataloader, 
+<span class="ansi-green-fg ansi-bold">     22</span>     desc<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(175,0,0)">f</span><span style="color:rgb(175,0,0)">'</span><span style="color:rgb(175,0,0)">Epoch </span><span style="font-weight:bold;color:rgb(175,95,135)">{</span>epoch<span style="color:rgb(98,98,98)">+</span><span style="color:rgb(98,98,98)">1</span><span style="font-weight:bold;color:rgb(175,95,135)">}</span><span style="color:rgb(175,0,0)">/</span><span style="font-weight:bold;color:rgb(175,95,135)">{</span>num_epochs<span style="font-weight:bold;color:rgb(175,95,135)">}</span><span style="color:rgb(175,0,0)">'</span>, total<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(0,135,0)">len</span>(train_dataloader))
+<span class="ansi-green-fg ansi-bold">     24</span> <span style="font-weight:bold;color:rgb(0,135,0)">for</span> batch <span style="font-weight:bold;color:rgb(175,0,255)">in</span> progress_bar:
+<span class="ansi-green-fg ansi-bold">     25</span>     <span style="font-style:italic;color:rgb(95,135,135)"># Forward pass</span>
+<span class="ansi-green-fg">---&gt; 26</span>     outputs <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">model</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">pixel_values</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">batch</span><span class="ansi-yellow-bg">[</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">pixel_values</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span class="ansi-yellow-bg">]</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">to</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">     27</span> <span class="ansi-yellow-bg">                    </span><span class="ansi-yellow-bg">input_boxes</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">batch</span><span class="ansi-yellow-bg">[</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">input_boxes</span><span style="color:rgb(175,0,0)" class="ansi-yellow-bg">"</span><span class="ansi-yellow-bg">]</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">to</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">device</span><span class="ansi-yellow-bg">)</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">     28</span> <span class="ansi-yellow-bg">                    </span><span class="ansi-yellow-bg">multimask_output</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span style="font-weight:bold;color:rgb(0,135,0)" class="ansi-yellow-bg">False</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">     30</span>     <span style="font-style:italic;color:rgb(95,135,135)"># Compute loss</span>
+<span class="ansi-green-fg ansi-bold">     31</span>     predicted_masks <span style="color:rgb(98,98,98)">=</span> outputs<span style="color:rgb(98,98,98)">.</span>pred_masks<span style="color:rgb(98,98,98)">.</span>squeeze(<span style="color:rgb(98,98,98)">1</span>)
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:1358</span>, in <span class="ansi-cyan-fg">SamModel.forward</span><span class="ansi-blue-fg">(self, pixel_values, input_points, input_labels, input_boxes, input_masks, image_embeddings, multimask_output, attention_similarity, target_embedding, output_attentions, output_hidden_states, return_dict, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1355</span> vision_hidden_states <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+<span class="ansi-green-fg ansi-bold">   1357</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> pixel_values <span style="font-weight:bold;color:rgb(175,0,255)">is</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>:
+<span class="ansi-green-fg">-&gt; 1358</span>     vision_outputs <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">vision_encoder</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg ansi-bold">   1359</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">pixel_values</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1360</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">output_attentions</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_attentions</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1361</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">output_hidden_states</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_hidden_states</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1362</span> <span class="ansi-yellow-bg">        </span><span class="ansi-yellow-bg">return_dict</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">return_dict</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">   1363</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1364</span>     image_embeddings <span style="color:rgb(98,98,98)">=</span> vision_outputs[<span style="color:rgb(98,98,98)">0</span>]
+<span class="ansi-green-fg ansi-bold">   1366</span>     <span style="font-weight:bold;color:rgb(0,135,0)">if</span> output_hidden_states:
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:1046</span>, in <span class="ansi-cyan-fg">SamVisionEncoder.forward</span><span class="ansi-blue-fg">(self, pixel_values, output_attentions, output_hidden_states, return_dict)</span>
+<span class="ansi-green-fg ansi-bold">   1041</span>     layer_outputs <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_gradient_checkpointing_func(
+<span class="ansi-green-fg ansi-bold">   1042</span>         layer_module<span style="color:rgb(98,98,98)">.</span><span style="color:rgb(0,0,255)">__call__</span>,
+<span class="ansi-green-fg ansi-bold">   1043</span>         hidden_states,
+<span class="ansi-green-fg ansi-bold">   1044</span>     )
+<span class="ansi-green-fg ansi-bold">   1045</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1046</span>     layer_outputs <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">layer_module</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">hidden_states</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">output_attentions</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_attentions</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1048</span> hidden_states <span style="color:rgb(98,98,98)">=</span> layer_outputs[<span style="color:rgb(98,98,98)">0</span>]
+<span class="ansi-green-fg ansi-bold">   1050</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> output_attentions:
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:939</span>, in <span class="ansi-cyan-fg">SamVisionLayer.forward</span><span class="ansi-blue-fg">(self, hidden_states, output_attentions)</span>
+<span class="ansi-green-fg ansi-bold">    936</span>     height, width <span style="color:rgb(98,98,98)">=</span> hidden_states<span style="color:rgb(98,98,98)">.</span>shape[<span style="color:rgb(98,98,98)">1</span>], hidden_states<span style="color:rgb(98,98,98)">.</span>shape[<span style="color:rgb(98,98,98)">2</span>]
+<span class="ansi-green-fg ansi-bold">    937</span>     hidden_states, padding_shape <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>window_partition(hidden_states, <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>window_size)
+<span class="ansi-green-fg">--&gt; 939</span> hidden_states, attn_weights <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">attn</span><span class="ansi-yellow-bg">(</span>
+<span class="ansi-green-fg ansi-bold">    940</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">hidden_states</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">hidden_states</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">    941</span> <span class="ansi-yellow-bg">    </span><span class="ansi-yellow-bg">output_attentions</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">output_attentions</span><span class="ansi-yellow-bg">,</span>
+<span class="ansi-green-fg ansi-bold">    942</span> <span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">    943</span> <span style="font-style:italic;color:rgb(95,135,135)"># Reverse window partition</span>
+<span class="ansi-green-fg ansi-bold">    944</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>window_size <span style="color:rgb(98,98,98)">&gt;</span> <span style="color:rgb(98,98,98)">0</span>:
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1511</span>, in <span class="ansi-cyan-fg">Module._wrapped_call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1509</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_compiled_call_impl(<span style="color:rgb(98,98,98)">*</span>args, <span style="color:rgb(98,98,98)">*</span><span style="color:rgb(98,98,98)">*</span>kwargs)  <span style="font-style:italic;color:rgb(95,135,135)"># type: ignore[misc]</span>
+<span class="ansi-green-fg ansi-bold">   1510</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1511</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">self</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">_call_impl</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/modules/module.py:1520</span>, in <span class="ansi-cyan-fg">Module._call_impl</span><span class="ansi-blue-fg">(self, *args, **kwargs)</span>
+<span class="ansi-green-fg ansi-bold">   1515</span> <span style="font-style:italic;color:rgb(95,135,135)"># If we don't have any hooks, we want to skip the rest of the logic in</span>
+<span class="ansi-green-fg ansi-bold">   1516</span> <span style="font-style:italic;color:rgb(95,135,135)"># this function, and just call forward.</span>
+<span class="ansi-green-fg ansi-bold">   1517</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="font-weight:bold;color:rgb(175,0,255)">not</span> (<span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>_forward_pre_hooks
+<span class="ansi-green-fg ansi-bold">   1518</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_pre_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_backward_hooks
+<span class="ansi-green-fg ansi-bold">   1519</span>         <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_hooks <span style="font-weight:bold;color:rgb(175,0,255)">or</span> _global_forward_pre_hooks):
+<span class="ansi-green-fg">-&gt; 1520</span>     <span style="font-weight:bold;color:rgb(0,135,0)">return</span> <span class="ansi-yellow-bg">forward_call</span><span class="ansi-yellow-bg">(</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">args</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">*</span><span class="ansi-yellow-bg">kwargs</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1522</span> <span style="font-weight:bold;color:rgb(0,135,0)">try</span>:
+<span class="ansi-green-fg ansi-bold">   1523</span>     result <span style="color:rgb(98,98,98)">=</span> <span style="font-weight:bold;color:rgb(0,135,0)">None</span>
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/transformers/models/sam/modeling_sam.py:846</span>, in <span class="ansi-cyan-fg">SamVisionAttention.forward</span><span class="ansi-blue-fg">(self, hidden_states, output_attentions)</span>
+<span class="ansi-green-fg ansi-bold">    841</span> <span style="font-weight:bold;color:rgb(0,135,0)">if</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>use_rel_pos:
+<span class="ansi-green-fg ansi-bold">    842</span>     attn_weights <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>add_decomposed_rel_pos(
+<span class="ansi-green-fg ansi-bold">    843</span>         attn_weights, query, <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>rel_pos_h, <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>rel_pos_w, (height, width), (height, width)
+<span class="ansi-green-fg ansi-bold">    844</span>     )
+<span class="ansi-green-fg">--&gt; 846</span> attn_weights <span style="color:rgb(98,98,98)">=</span> <span class="ansi-yellow-bg">torch</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">nn</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">functional</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">softmax</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">attn_weights</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">dtype</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">torch</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">float32</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">dim</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">-</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">1</span><span class="ansi-yellow-bg">)</span><span style="color:rgb(98,98,98)">.</span>to(query<span style="color:rgb(98,98,98)">.</span>dtype)
+<span class="ansi-green-fg ansi-bold">    848</span> attn_probs <span style="color:rgb(98,98,98)">=</span> nn<span style="color:rgb(98,98,98)">.</span>functional<span style="color:rgb(98,98,98)">.</span>dropout(attn_weights, p<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>dropout, training<span style="color:rgb(98,98,98)">=</span><span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>training)
+<span class="ansi-green-fg ansi-bold">    850</span> attn_output <span style="color:rgb(98,98,98)">=</span> (attn_probs <span style="color:rgb(98,98,98)">@</span> value)<span style="color:rgb(98,98,98)">.</span>reshape(batch_size, <span style="color:rgb(0,135,0)">self</span><span style="color:rgb(98,98,98)">.</span>num_attention_heads, height, width, <span style="color:rgb(98,98,98)">-</span><span style="color:rgb(98,98,98)">1</span>)
+
+File <span class="ansi-green-fg">~/miniconda3/lib/python3.11/site-packages/torch/nn/functional.py:1860</span>, in <span class="ansi-cyan-fg">softmax</span><span class="ansi-blue-fg">(input, dim, _stacklevel, dtype)</span>
+<span class="ansi-green-fg ansi-bold">   1858</span>     ret <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)">input</span><span style="color:rgb(98,98,98)">.</span>softmax(dim)
+<span class="ansi-green-fg ansi-bold">   1859</span> <span style="font-weight:bold;color:rgb(0,135,0)">else</span>:
+<span class="ansi-green-fg">-&gt; 1860</span>     ret <span style="color:rgb(98,98,98)">=</span> <span style="color:rgb(0,135,0)" class="ansi-yellow-bg">input</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">softmax</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-bg">dim</span><span class="ansi-yellow-bg">,</span><span class="ansi-yellow-bg"> </span><span class="ansi-yellow-bg">dtype</span><span style="color:rgb(98,98,98)" class="ansi-yellow-bg">=</span><span class="ansi-yellow-bg">dtype</span><span class="ansi-yellow-bg">)</span>
+<span class="ansi-green-fg ansi-bold">   1861</span> <span style="font-weight:bold;color:rgb(0,135,0)">return</span> ret
+
+<span class="ansi-red-fg">KeyboardInterrupt</span>: </pre>
+</div>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/HasanGoni\.github\.io\/fine_tune_SAM");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/HasanGoni/fine_tune_SAM/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
