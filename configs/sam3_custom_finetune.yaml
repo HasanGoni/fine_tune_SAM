@@ -1,0 +1,76 @@
+experiment_name: sam3_custom_finetune
+
+# Model configuration
+model:
+  checkpoint_path: facebook/sam3
+  load_from_HF: true
+  enable_segmentation: true
+  enable_inst_interactivity: false
+  eval_mode: false
+
+# Dataset configuration
+dataset:
+  name: custom_dataset
+  root: /workspace/data/autolabel
+  annotation_file: /workspace/data/autolabel/autolabel_annotations.json
+  image_dir: /workspace/data/autolabel/images
+  format: coco
+  splits:
+    train: train
+    val: val
+
+# Training configuration
+training:
+  batch_size: 4
+  num_epochs: 10
+  learning_rate: 8.0e-05
+  optimizer: AdamW
+  weight_decay: 0.1
+  gradient_clip: 0.1
+
+  # Learning rate schedule
+  scheduler:
+    type: InverseSquareRoot
+    warmup_steps: 20
+    timescale: 20
+    cooldown_steps: 20
+
+  # Component-specific learning rates
+  lr_scale:
+    transformer: 1.0
+    vision_backbone: 0.3125
+    language_backbone: 0.0625
+
+  # Data augmentation
+  augmentation:
+    random_flip: true
+    random_crop: false
+    color_jitter: false
+
+  # Resolution
+  resolution: 1008
+  max_annotations_per_image: 200
+
+# Distributed training configuration
+launcher:
+  use_cluster: false
+  num_gpus: 1
+  num_nodes: 1
+  distributed_backend: nccl
+
+# Logging and checkpointing
+logging:
+  output_dir: ./outputs/sam3_finetune
+  log_frequency: 10
+  save_checkpoint_frequency: 500
+  eval_frequency: 100
+  wandb:
+    enabled: false
+    project: sam3-finetune
+    entity: null
+
+# Scratch training mode (for segmentation)
+scratch:
+  enable_segmentation: true
+  segmentation_loss_weight: 1.0
+  detection_loss_weight: 1.0
